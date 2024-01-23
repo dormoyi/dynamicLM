@@ -9,7 +9,7 @@ output:
 
 # Required packages
 ```{r, message=F, warning=F}
-install dplyr
+#install dplyr
 # install.packages("dplyr")
 library(tictoc) # to time code, can ignore
 library(dplyr)
@@ -27,6 +27,8 @@ library(devtools)
 # library(dynamicLM)
 
 ```
+
+
 
 
 # Load dataset  
@@ -48,6 +50,12 @@ df <- df[!duplicated(df[, c("MRN_FULL", "time_index")]), ]
 head(df)
 ```
 
+```{r}
+par(mfrow=c(1,2))
+hist(df$time_index)
+hist(df$time_to_event)
+````
+
 
 # dynamicLM data transformation 
 ## Basic setting
@@ -63,7 +71,7 @@ Notes:
 
 ```{r}
 # Pick landmarks and window on the above
-w <- 2 # Predict the 5-year outcome
+w <- 1 # Predict the 5-year outcome
 lms <- seq(5, 10, by = 1) # Risk assessment time points 
 
 # Specify outcome and exposure types
@@ -134,8 +142,6 @@ sum(lmdata$data$time_to_ct >= -0.5 & lmdata$data$time_to_ct <= 0.5) / nrow(lmdat
 
 # save histogram as png
 # png("C:\\Users\\idormoy\\Documents\\counterfactual_lung_cancer_surveillance\\penLM\\data\\time_to_ct_hist.png")
-
-```
 
 ```
 
@@ -222,7 +228,7 @@ source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\dynamic_lm.R")
 # pick the best lambda and fit one model we can use
 # "lambda.min", "lambda.1se" or a numeric value
 pen.cox <- dynamic_lm(cv.cox, lambda = "lambda.min") 
-print(pen.cox)
+#print(pen.cox)
 ```
 
 ## Model visualisation... (optional)
@@ -273,8 +279,8 @@ lmdata_test1 <- lmdata_test
 lmdata_test1$data <- lmdata_test$data[lmdata_test$data$LM >= 5 & 
                                         complete.cases(lmdata_test$data), ]
 
-preds_cox <- predict(example.cox, w = 2, newdata = lmdata_test1)
-preds_pen <- predict(pen.cox, w = 2, newdata = lmdata_test1)
+#preds_cox <- predict(example.cox, w = 1, newdata = lmdata_test1)
+preds_pen <- predict(pen.cox, w = 1, newdata = lmdata_test1)
 ```
 
 ```{r}
@@ -342,11 +348,19 @@ source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\calplot.R")
 library(pec)
 
 
+
 par(mfrow = c(2, 3))
+
+
+
 cal <- calplot(list("Penalized model" = preds_pen, "Simple model" = preds_cox),
                # times = c(5,6,7,8),
                # xlim = c(0.3, 1), ylim = c(0.3, 1),
                method = "quantile", q = 10) # deciles
+```
+
+```{r}
+preds_cox
 ```
 
 ### Discrimination & Predictive accuracy 

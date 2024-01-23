@@ -52,6 +52,11 @@
 #' }
 #' @export
 #'
+#' 
+
+# import content from R/get_lm_data.R
+source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\get_lm_data.R")
+
 stack_data <- function(data, outcome, lms, w, covs, format = c("wide", "long"),
                        id, rtime, left.open = FALSE) {
   if (!all(covs$fixed %in% colnames(data))) {
@@ -82,7 +87,7 @@ stack_data <- function(data, outcome, lms, w, covs, format = c("wide", "long"),
 
     lmdata <- lapply(lms, function(lm) {
       get_lm_data(data = data, outcome = outcome, lm = lm, horizon = lm + w,
-                  covs = covs, format = "wide", left.open = left.open)
+                  covs = covs, format = "wide")#, left.open = left.open)
       })
     lmdata <- do.call(rbind, lmdata)
 
@@ -95,8 +100,8 @@ stack_data <- function(data, outcome, lms, w, covs, format = c("wide", "long"),
 
     lmdata <- lapply(lms, function(lm) {
       get_lm_data(data = data, outcome = outcome, lm = lm, horizon = lm + w,
-                  covs = covs, format = "long", id = id, rtime = rtime,
-                  left.open = left.open, split.data = split.data)
+                  covs = covs, format = "long", id = id, rtime = rtime)#,
+                  #left.open = left.open, split.data = split.data)
     })
     lmdata <- do.call(rbind, lmdata)
 

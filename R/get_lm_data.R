@@ -33,68 +33,68 @@
 #'
 # TODO: add examples
 # TODO: add references
-get_lm_data <- function(data, outcome, lm, horizon, covs,
-                        format = c("wide", "long"), id, rtime,
-                        left.open = TRUE, split.data) {
+
+get_lm_data <- function (data, outcome, lm, horizon, covs,
+                         format = c("wide", "long"), id, rtime, right = TRUE) {
   format <- match.arg(format)
   if (format == "wide") {
     lmdata <- data
-    if (!is.null(covs$varying)) {
-      for (col in covs$varying)
+    if (!is.null(covs$varying)){
+      for (col in covs$covarying)
         lmdata[[col]] <- 1 - as.numeric(lmdata[[col]] > lm)
     }
 
-  } else {
+
+  }
+  else {
     if (missing(id))
       stop("argument 'id' should be specified for long format data")
     if (missing(rtime))
       stop("argument 'rtime' should be specified for long format data")
-    lookup <- FALSE
-    if (missing(split.data)) {
-      data <- data[order(data[[id]], data[[rtime]]), ]
-      ids <- unique(data[[id]])
-      n <- length(ids)
-      lookup <- TRUE
-    } else {
-      n <- length(split.data)
+    ord <- order(data[[id]], data[[rtime]])
+    data <- data[ord, ] # order the data per id and rtime = time_index, not cut to lms
+    ids <- unique(data[[id]]) # get all of the ids
+    n <- length(ids) # number of different people
+    lmdata <- data[which(!duplicated(data[[id]])), ] # take the first line for each id
+
+
+    # add an empty time_to_ct column
+    time_to_ct <- "time_to_ct"
+    lmdata[time_to_ct] <- NA
+    for (i in 1:n) {
+      wh <- which(data[[id]] == ids[i])
+      di <- data[wh, ] # get the data for each id
+
+
+      # find the closest time_to_event to the landmark time
+      closest <- which.min(abs(di[[rtime]] - lm))
+      # get the time distance to the landmark
+      time_to_lm <- di[[rtime]][closest] - lm
+      # add that line to the lmdata, change time_to_event to LM and add the time_to_lm
+      lmdata[i, ] <- di[closest, ]
+      lmdata[i, time_to_ct] <- time_to_lm
+
+
+
+
     }
 
-    lmdata <- lapply(1:n, function(i) {
-      if (lookup) {
-        wh <- which(data[[id]] == ids[i])
-        di <- data[wh, ]
-      } else {
-        di <- split.data[[i]]
-      }
-      t.fups <- di[[rtime]]
 
-      # idx <- cut(lm, c(di[[rtime]], Inf), right = right, labels = FALSE)
-      idx <- findInterval(lm, c(t.fups, Inf), left.open = left.open)
 
-      # if (!is.na(idx)) {
-      if (idx != 0) {
-        return(di[idx, ])
-      } else {
-        out <- di[1, ]
-        if (!is.null(covs$varying)) {
-          out[, covs$varying] <- NA
-          out[, rtime] <- NA
-        }
-        return(out)
-      }
-    })
-    lmdata <- do.call(rbind, lmdata)
+
   }
-
   lmdata <- lmdata[lmdata[[outcome$time]] > lm, ]
+  if (format == "long")
+    lmdata <- lmdata[!is.na(lmdata[[id]]), ]
   lmdata[outcome$status] <- lmdata[[outcome$status]] *
     as.numeric(lmdata[[outcome$time]] <= horizon)
   lmdata[outcome$time] <- pmin(as.vector(lmdata[[outcome$time]]), horizon)
   lmdata$LM <- lm
   if (format == "long")
-    cols <- match(c(id, outcome$time, outcome$status, "LM", covs$fixed,
-                    covs$varying, rtime), names(lmdata))
-  else cols <- match(c(outcome$time, outcome$status, "LM", covs$fixed,
-                       covs$varying), names(lmdata))
+    cols <- match(c(id, outcome$time, outcome$status, covs$fixed,
+                    covs$varying, rtime, "time_to_ct", "LM"), names(lmdata))
+  else cols <- match(c(outcome$time, outcome$status, covs$fixed,
+                       covs$varying, "LM"), names(lmdata))
   return(lmdata[, cols])
 }
+

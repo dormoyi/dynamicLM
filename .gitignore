@@ -7,3 +7,5 @@
 .DS_Store
 example-code/
 data-raw/
+R/data/pen_lm_input.csv
+R/data/pen_lm_output.csv

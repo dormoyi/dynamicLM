@@ -103,6 +103,13 @@ dynamic_lm <- function(...) {
 #' @import survival
 #' @export
 #'
+#' 
+
+source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\dynamic_lm_helper.R")
+source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\cv.pen_lm.R")
+
+
+
 dynamic_lm.LMdataframe <-  function(lmdata,
                                     formula,
                                     type = "coxph",

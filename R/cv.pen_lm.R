@@ -45,7 +45,6 @@
 #' @import glmnet riskRegression
 #' @export
 #' 
-source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\checks.R")
 
 cv.pen_lm <- function(x, y,
                      id_col,

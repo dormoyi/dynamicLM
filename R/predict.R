@@ -73,7 +73,6 @@
 #'
 #' 
 
-source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\riskScore.R")
 
 
 predict.dynamicLM <- function(object, newdata, lms, cause, w, extend = FALSE,

@@ -1,4 +1,3 @@
-source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\utils.R")
 
 
 dynamic_lm_helper <- function(formula, type, data, lmdata, method, cluster,

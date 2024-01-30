@@ -105,8 +105,7 @@ dynamic_lm <- function(...) {
 #'
 #' 
 
-source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\dynamic_lm_helper.R")
-source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\cv.pen_lm.R")
+
 
 
 

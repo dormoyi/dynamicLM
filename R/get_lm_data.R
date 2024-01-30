@@ -34,7 +34,8 @@
 # TODO: add examples
 # TODO: add references
 
-get_lm_data <- function (data, outcome, lm, horizon, covs,
+
+get_lm_data <- function (data, outcome, lm, horizon, covs, static_covs,
                          format = c("wide", "long"), id, rtime, right = TRUE) {
   format <- match.arg(format)
   if (format == "wide") {
@@ -70,12 +71,18 @@ get_lm_data <- function (data, outcome, lm, horizon, covs,
       closest <- which.min(abs(di[[rtime]] - lm))
       # get the time distance to the landmark
       time_to_lm <- di[[rtime]][closest] - lm
-      # add that line to the lmdata, change time_to_event to LM and add the time_to_lm
-      lmdata[i, ] <- di[closest, ]
-      lmdata[i, time_to_ct] <- time_to_lm
 
-
-
+      # check if the closest is less than 3 years 
+      if (abs(time_to_lm) <= 3){
+        lmdata[i, ] <- di[closest, ]
+        lmdata[i, time_to_ct] <- time_to_lm
+      }
+      else{
+        lmdata[i, ] <- NA
+        lmdata[i, time_to_ct] <- NA
+        # static variables should be copied over
+        lmdata[i, static_covs] <- di[closest, static_covs]
+      }
 
     }
 
@@ -95,6 +102,9 @@ get_lm_data <- function (data, outcome, lm, horizon, covs,
                     covs$varying, rtime, "time_to_ct", "LM"), names(lmdata))
   else cols <- match(c(outcome$time, outcome$status, covs$fixed,
                        covs$varying, "LM"), names(lmdata))
+
+  # replace NAs with the most frequent value of the column, this is done at the stack level
+  lmdata <- lmdata %>% mutate_if(is.factor, function(x) replace(x, is.na(x), names(sort(table(x), decreasing = TRUE)[1])))
   return(lmdata[, cols])
 }
 

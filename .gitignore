@@ -9,3 +9,8 @@ example-code/
 data-raw/
 R/data/pen_lm_input.csv
 R/data/pen_lm_output.csv
+input_before_penLM.csv
+majority_classes_per_lm.csv
+*.csv
+R/checks_cov.ipynb
+R/dynamicLM-Ines.Rmd

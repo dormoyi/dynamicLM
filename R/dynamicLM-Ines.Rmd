@@ -13,15 +13,14 @@ output:
 # install.packages("dplyr")
 library(tictoc) # to time code, can ignore
 library(dplyr)
-library(devtools)
 # install_github("thehanlab/dynamicLM", 
 #                ref = "extension/summary-metric", 
 #                force = TRUE)
 
 # library(dynamicLM)
 
-library(dplyr)
 library(devtools)
+load_all()
 # install_github("dormoyi/dynamicLM", ref = "main")
 
 # library(dynamicLM)
@@ -99,16 +98,15 @@ print(paste("Number of patients in training set:", length(train_id)))
 print(paste("Number of patients in test set:", length(test_id)))
 
 # import stack_data.R
-source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\stack_data.R")
 
 # Data transformation
 lmdata <- stack_data(data = df[df$MRN_FULL %in% train_id, ], 
                      outcome = outcome, lms = lms, w = w, 
-                     covs = list(fixed = fixed, varying = varying), 
+                     covs = list(fixed = fixed, varying = varying), fixed,
                      format = "long", id = "MRN_FULL", rtime = "time_index")
 lmdata_test <- stack_data(data = df[!df$MRN_FULL %in% test_id, ], 
                      outcome = outcome, lms = lms, w = w, 
-                     covs = list(fixed = fixed, varying = varying), 
+                     covs = list(fixed = fixed, varying = varying), fixed,
                      format = "long", id = "MRN_FULL", rtime = "time_index")
 
 
@@ -116,13 +114,13 @@ lmdata_test <- stack_data(data = df[!df$MRN_FULL %in% test_id, ],
 dat.lm <- lmdata$data
 dat.lm <- dat.lm[order(dat.lm$MRN_FULL, dat.lm$LM),]
 
-# head(dat.lm)
+
 
 # get number of lines with at least one NA
 sum(complete.cases(dat.lm) == FALSE) # 0
 # get total number of lines
-nrow(dat.lm) # 987
-# dat.lm[1:10,]
+nrow(dat.lm) 
+nrow(lmdata$data) # 1164? TODO check this
 ```
 
 ```{r}
@@ -151,7 +149,6 @@ sum(lmdata$data$time_to_ct >= -0.5 & lmdata$data$time_to_ct <= 0.5) / nrow(lmdat
 # linear interaction term = var * LM (denoted as _1), 
 # quadratic interaction term = var * LM^2 (denoted as _2)
 
-source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\add_interactions.R")
 
 lmdata <- add_interactions(lmdata = lmdata, lm_covs = covs,
                            func_covars = c("linear", "quadratic"), 
@@ -159,6 +156,10 @@ lmdata <- add_interactions(lmdata = lmdata, lm_covs = covs,
 lmdata_test <- add_interactions(lmdata = lmdata_test, lm_covs = covs,
                            func_covars = c("linear", "quadratic"), 
                            func_lms = c("linear", "quadratic"))
+
+
+# save lmdata$data as csv
+write.csv(lmdata$data[order(lmdata$data$MRN_FULL, lmdata$data$LM),], "C:\\Users\\idormoy\\Documents\\dynamicLM\\input_before_penLM.csv", row.names = FALSE)
 
 # colnames(lmdata$data)
 ```
@@ -189,7 +190,6 @@ lmdata_test <- add_interactions(lmdata = lmdata_test, lm_covs = covs,
 library("survival")
 
 ####################
-source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\dynamic_lm.R")
 
 formula <- "Surv(LM, time_to_event, EventMortality) ~ 
               SexVar + SexVar_1 + 
@@ -210,7 +210,6 @@ example.cox <- dynamic_lm(lmdata = lmdata, formula = as.formula(formula),
 lmdata_complete <- lmdata
 lmdata_complete$data <- lmdata$data[complete.cases(lmdata$data), ]
 
-source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\cv.pen_lm.R")
 
 
 # cross validation
@@ -222,7 +221,6 @@ toc()
 
 ```{r}
 
-source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\dynamic_lm.R")
 
 
 # pick the best lambda and fit one model we can use
@@ -235,7 +233,6 @@ pen.cox <- dynamic_lm(cv.cox, lambda = "lambda.min")
 
 ```{r, fig.height=2, fig.width=6}
 
-source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\plot.R")
 
 
 # install.packages("msm")
@@ -272,15 +269,14 @@ plot(pen.cox)
 # * however, when it is small then it does not stratify well...
 # * you can play with this w and see how the calibration plots change
 
-source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\predict.R")
 
 
 lmdata_test1 <- lmdata_test
 lmdata_test1$data <- lmdata_test$data[lmdata_test$data$LM >= 5 & 
                                         complete.cases(lmdata_test$data), ]
 
-#preds_cox <- predict(example.cox, w = 1, newdata = lmdata_test1)
-preds_pen <- predict(pen.cox, w = 1, newdata = lmdata_test1)
+# preds_cox <- predict(example.cox, w = 1, newdata = lmdata_test1) # check later how to do the cox prediciton
+preds_cox <- predict(pen.cox, w = 1, newdata = lmdata_test1) # ? or pred pen?
 ```
 
 ```{r}
@@ -326,7 +322,7 @@ df <- data.frame(MRN_FULL, pen_risk, EventMortality, time_to_event)
 
 # sort df by MRN_FULL, time_to_event
 df <- df[order(df$MRN_FULL, df$time_to_event), ]
-print(df)
+# print(df)
 
 # print columns of combined.preds
 colnames(combined.preds)
@@ -341,7 +337,6 @@ colnames(combined.preds)
 ### Calibration
 ```{r, fig.height=7, fig.width=9}
 
-source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\calplot.R")
 
 
 # install.packages("pec")
@@ -366,7 +361,6 @@ preds_cox
 ### Discrimination & Predictive accuracy 
 ```{r, fig.height=5, fig.width=9}
 
-source("C:\\Users\\idormoy\\Documents\\dynamicLM\\R\\score.R")
 
 
 performance <- score(list("Penalized model" = preds_pen, "Simple model" = preds_cox))

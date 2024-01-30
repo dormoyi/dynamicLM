@@ -101,7 +101,7 @@ get_lm_data <- function (data, outcome, lm, horizon, covs, static_covs,
     cols <- match(c(id, outcome$time, outcome$status, covs$fixed,
                     covs$varying, rtime, "time_to_ct", "LM"), names(lmdata))
   else cols <- match(c(outcome$time, outcome$status, covs$fixed,
-                       covs$varying, "LM"), names(lmdata))
+                       covs$varying, "time_to_ct", "LM"), names(lmdata))
 
   # replace NAs with the most frequent value of the column, this is done at the stack level
   lmdata <- lmdata %>% mutate_if(is.factor, function(x) replace(x, is.na(x), names(sort(table(x), decreasing = TRUE)[1])))

@@ -105,36 +105,12 @@ stack_data <- function(data, outcome, lms, w, covs, static_covs, format = c("wid
     })    
     lmdata <- do.call(rbind, lmdata)
 
-    # get majority class for covs (excluding static covs) for each LM
-    # covs$varying <- as.character(covs$varying)
-    # levels(covs$varying) <- make.names(levels(covs$varying))
-    # calculate_majority_class <- function(sub_dataframe) {
-    #   majority_classes <- sapply(select(sub_dataframe, covs$varying), function(covariate_column) {
-    #     table(covariate_column)[which.max(table(covariate_column))]
-    #   })
-    #   return(data.frame(covariate = names(majority_classes), majority_class = unname(majority_classes)))
-    # }
-    # majority_classes_per_lm <- lmdata %>%
-    #   group_by(LM) %>%
-    #   do(data.frame(LM = unique(.$LM), calculate_majority_class(.)))
+    # # get majority class for covs (excluding static covs) for each LM
+    # results <- lmdata %>% group_by(LM) %>% select(time_to_ct, covs$varying) %>% summarise_all(funs(majority_class = names(which.max(table(.)))))
 
-#     get_majority_class <- function(x) {
-#   table_x <- table(x)
-#   majority_class <- names(table_x)[which.max(table_x)]
-#   return(majority_class)
-# }
-# # Group by LM and summarize each varying column with the majority class
-# result <- lmdata %>%
-#   group_by(LM) %>%
-#   summarize(across(all_of(varying_columns), ~ get_majority_class(.)))
-
-  results <- lmdata %>% group_by(LM) %>% select(time_to_ct, covs$varying) %>% summarise_all(funs(majority_class = names(which.max(table(.)))))
-
-
-
-    # save majority_classes_per_lm in a .csv file 
-    print('Saving majority_classes_per_lm in a .csv file')
-    write.csv(results, file = "majority_classes_per_lm.csv")
+    # # save majority_classes_per_lm in a .csv file 
+    # print('Saving majority_classes_per_lm in a .csv file')
+    # write.csv(results, file = "majority_classes_per_lm.csv")
 
 
   }

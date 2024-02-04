@@ -56,6 +56,7 @@
 
 # import content from R/get_lm_data.R
 
+
 stack_data <- function(data, outcome, lms, w, covs, static_covs, format = c("wide", "long"),
                        id, rtime, left.open = FALSE) {
   if (!all(covs$fixed %in% colnames(data))) {
@@ -91,19 +92,23 @@ stack_data <- function(data, outcome, lms, w, covs, static_covs, format = c("wid
     lmdata <- do.call(rbind, lmdata)
 
 
-  } else if (format == "long") {
-    data <- data[order(data[[id]], data[[rtime]]), ]
-    split.data <- split(data, data[[id]])
-    # TODO: can still improve here
-    # For example use rle (faster) and then turn into a list
-    # run_lengths <- rle(data[[id]])$lengths
 
-    lmdata <- lapply(lms, function(lm) {
-      get_lm_data(data = data, outcome = outcome, lm = lm, horizon = lm + w,
-                  covs = covs, static_covs, format = "long", id = id, rtime = rtime)#,
-                  #left.open = left.open, split.data = split.data)
-    })    
-    lmdata <- do.call(rbind, lmdata)
+
+  } else if (format == "long") {
+    # data <- data[order(data[[id]], data[[rtime]]), ]
+    # split.data <- split(data, data[[id]])
+
+
+    # # TODO: can still improve here
+    # # For example use rle (faster) and then turn into a list
+    # # run_lengths <- rle(data[[id]])$lengths
+
+    # lmdata <- lapply(lms, function(lm) {
+    #   get_lm_data(data = data, outcome = outcome, lm = lm, horizon = lm + w,
+    #               covs = covs, static_covs, format = "long", id = id, rtime = rtime)#,
+    #               #left.open = left.open, split.data = split.data)
+    # })    
+    # lmdata <- do.call(rbind, lmdata)
 
     # # get majority class for covs (excluding static covs) for each LM
     # results <- lmdata %>% group_by(LM) %>% select(time_to_ct, covs$varying) %>% summarise_all(funs(majority_class = names(which.max(table(.)))))
@@ -113,6 +118,28 @@ stack_data <- function(data, outcome, lms, w, covs, static_covs, format = c("wid
     # write.csv(results, file = "majority_classes_per_lm.csv")
 
 
+    lmdata = get_lm_data(data=data,
+                         outcome=outcome,
+                         lm=lms[1],
+                         horizon=lms[1]+w,
+                         covs=covs,
+                          static_covs,
+                         format, id, rtime)#, right)
+
+    if (length(lms) > 1){
+      for (i in 2:length(lms))
+        lmdata = rbind(lmdata, get_lm_data(data=data,
+                                           outcome=outcome,
+                                           lm=lms[i],
+                                           horizon=lms[i]+w,
+                                           covs=covs,
+                                            static_covs,
+                                           format, id, rtime))#, right))
+
+
+
+
+    }
   }
   out <- list(
     data = lmdata,

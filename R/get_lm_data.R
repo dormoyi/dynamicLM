@@ -73,24 +73,22 @@ get_lm_data <- function (data, outcome, lm, horizon, covs, static_covs,
       time_to_lm <- di[[rtime]][closest] - lm
 
       # check if the closest is less than 3 years 
-      if (abs(time_to_lm) <= 3){
-        lmdata[i, ] <- di[closest, ]
-        lmdata[i, time_to_ct] <- time_to_lm
-      }
-      else{
-        lmdata[i, ] <- NA
-        lmdata[i, time_to_ct] <- NA
-        # static variables should be copied over
-        lmdata[i, static_covs] <- di[closest, static_covs]
-      }
+      # if (abs(time_to_lm) <= 3){
+      lmdata[i, ] <- di[closest, ]
+      lmdata[i, time_to_ct] <- time_to_lm
+      # }
+      # else {
+      #   lmdata[i, ] <- NA
+      #   lmdata[i, time_to_ct] <- NA
+      #   # static variables should be copied over
+      #   lmdata[i, static_covs] <- di[closest, static_covs]
+      # }
 
     }
 
-
-
-
   }
   lmdata <- lmdata[lmdata[[outcome$time]] > lm, ]
+
   if (format == "long")
     lmdata <- lmdata[!is.na(lmdata[[id]]), ]
   lmdata[outcome$status] <- lmdata[[outcome$status]] *
@@ -104,7 +102,83 @@ get_lm_data <- function (data, outcome, lm, horizon, covs, static_covs,
                        covs$varying, "time_to_ct", "LM"), names(lmdata))
 
   # replace NAs with the most frequent value of the column, this is done at the stack level
-  lmdata <- lmdata %>% mutate_if(is.factor, function(x) replace(x, is.na(x), names(sort(table(x), decreasing = TRUE)[1])))
+  # lmdata <- lmdata %>% mutate_if(is.factor, function(x) replace(x, is.na(x), names(sort(table(x), decreasing = TRUE)[1])))
   return(lmdata[, cols])
 }
+
+
+
+# get_lm_data <- function(data, outcome, lm, horizon, covs,
+#                         format = c("wide", "long"), id, rtime,
+#                         left.open = TRUE, split.data) {
+#   format <- match.arg(format)
+#   if (format == "wide") {
+#     lmdata <- data
+#     if (!is.null(covs$varying)) {
+#       for (col in covs$varying)
+#         lmdata[[col]] <- 1 - as.numeric(lmdata[[col]] > lm)
+#     }
+
+#   } else {
+#     if (missing(id))
+#       stop("argument 'id' should be specified for long format data")
+#     if (missing(rtime))
+#       stop("argument 'rtime' should be specified for long format data")
+#     lookup <- FALSE
+#     if (missing(split.data)) {
+#       print("split data is missing")
+#       print("size of data at this point")
+#       print(nrow(data))
+#       data <- data[order(data[[id]], data[[rtime]]), ]
+#       ids <- unique(data[[id]])
+#       n <- length(ids)
+#       lookup <- TRUE
+#     } else {
+#       n <- length(split.data)
+#     }
+
+#     lmdata <- lapply(1:n, function(i) {
+#       if (lookup) {
+#         wh <- which(data[[id]] == ids[i])
+#         di <- data[wh, ]
+#       } else {
+#         di <- split.data[[i]]
+#       }
+#       print("di")
+#       print(di)
+
+#       t.fups <- di[[rtime]]
+
+#       print(t.fups)
+
+#       # idx <- cut(lm, c(di[[rtime]], Inf), right = right, labels = FALSE)
+#       idx <- findInterval(lm, c(t.fups, Inf), left.open = left.open)
+
+#       # if (!is.na(idx)) {
+#       if (idx != 0) {
+#         return(di[idx, ])
+#       } else {
+#         out <- di[1, ]
+#         if (!is.null(covs$varying)) {
+#           out[, covs$varying] <- NA
+#           out[, rtime] <- NA
+#         }
+#         return(out)
+#       }
+#     })
+#     lmdata <- do.call(rbind, lmdata)
+#   }
+
+#   lmdata <- lmdata[lmdata[[outcome$time]] > lm, ]
+#   lmdata[outcome$status] <- lmdata[[outcome$status]] *
+#     as.numeric(lmdata[[outcome$time]] <= horizon)
+#   lmdata[outcome$time] <- pmin(as.vector(lmdata[[outcome$time]]), horizon)
+#   lmdata$LM <- lm
+#   if (format == "long")
+#     cols <- match(c(id, outcome$time, outcome$status, "LM", covs$fixed,
+#                     covs$varying, rtime), names(lmdata))
+#   else cols <- match(c(outcome$time, outcome$status, "LM", covs$fixed,
+#                        covs$varying), names(lmdata))
+#   return(lmdata[, cols])
+# }
 
